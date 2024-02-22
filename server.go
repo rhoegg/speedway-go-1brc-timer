@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"compress/gzip"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -19,9 +18,9 @@ type TemperatureAveragesRequest struct {
 }
 
 type TemperatureAveragesResponse struct {
-	RacerID string  `json:"racerId"`
-	RaceID  string  `json:"raceId"`
-	Time    float32 `json:"time"`
+	RacerID  string        `json:"racerId"`
+	Time     float64       `json:"time"`
+	Averages []Measurement `json:"averages"`
 }
 
 func main() {
@@ -77,17 +76,16 @@ func main() {
 		if racerResponse.StatusCode != 200 {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("racer status %d", racerResponse.StatusCode)})
 		}
-		buf := bytes.Buffer{}
-		_, err = buf.ReadFrom(racerResponse.Body)
-		elapsed := time.Since(start)
-		defer racerResponse.Body.Close()
-
 		// receive full response
+		var response TemperatureAveragesResponse
+		decoder = json.NewDecoder(racerResponse.Body)
+		err = decoder.Decode(&response)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
 		// end timer
-		// check response
-		// - racerId
-		// - averages
-		c.JSON(http.StatusOK, gin.H{"temp": fmt.Sprintf("elapsed: %.5f", elapsed.Seconds())})
+		response.Time = time.Since(start).Seconds()
+		c.JSON(http.StatusOK, response)
 	})
 
 	r.Run()
