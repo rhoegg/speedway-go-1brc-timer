@@ -25,10 +25,11 @@ type MeasurementsJsonPipeline struct {
 	decompressed io.ReadCloser
 	csv          *csv.Reader
 	rowsConsumed int64
+	Epsilon      float64
 	Buffer       *bytes.Buffer
 }
 
-func NewMeasurementsJsonPipeline(compressedCsvDataReader io.Reader) (*MeasurementsJsonPipeline, error) {
+func NewMeasurementsJsonPipeline(compressedCsvDataReader io.Reader, epsilon float64) (*MeasurementsJsonPipeline, error) {
 	decompressed, err := gzip.NewReader(compressedCsvDataReader)
 	if err != nil {
 		return nil, err
@@ -38,6 +39,7 @@ func NewMeasurementsJsonPipeline(compressedCsvDataReader io.Reader) (*Measuremen
 		source:       compressedCsvDataReader,
 		decompressed: decompressed,
 		csv:          csvReader,
+		Epsilon:      epsilon,
 		Buffer:       bytes.NewBufferString("[\n"),
 	}, nil
 }
@@ -73,7 +75,7 @@ func (p *MeasurementsJsonPipeline) Read(dest []byte) (int, error) {
 				return 0, err
 			}
 			m.Station = record[0]
-			m.Temperature = RoundedFloat(temp)
+			m.Temperature = RoundedFloat(temp + p.Epsilon)
 
 			if p.rowsConsumed > 0 {
 				p.Buffer.WriteString(",\n")

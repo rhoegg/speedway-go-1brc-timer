@@ -8,13 +8,18 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"io"
-	"math/rand"
+	"math/rand/v2"
 )
 
 type CloudStorage struct {
 	S3Client *s3.Client
 	Bucket   string
 	Path     string
+}
+
+type StationData struct {
+	Key    string
+	Reader io.ReadCloser
 }
 
 func NewCloudStorage(ctx context.Context, bucket, path string) (*CloudStorage, error) {
@@ -30,7 +35,7 @@ func NewCloudStorage(ctx context.Context, bucket, path string) (*CloudStorage, e
 	}, nil
 }
 
-func (s *CloudStorage) GetStationData(ctx context.Context, count int) (io.ReadCloser, error) {
+func (s *CloudStorage) GetStationData(ctx context.Context, count int) (StationData, error) {
 	// prepare data
 	// - validate count (1M or 1B only)
 	prefix := ""
@@ -40,7 +45,7 @@ func (s *CloudStorage) GetStationData(ctx context.Context, count int) (io.ReadCl
 	case 1000000000:
 		prefix = "stations"
 	default:
-		return nil, errors.New(fmt.Sprintf("unsupported count %d", count))
+		return StationData{}, errors.New(fmt.Sprintf("unsupported count %d", count))
 	}
 
 	listResult, err := s.S3Client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
@@ -51,12 +56,12 @@ func (s *CloudStorage) GetStationData(ctx context.Context, count int) (io.ReadCl
 	key := ""
 	switch prefix {
 	case "1Mstations":
-		index := rand.Intn(len(objects))
+		index := rand.IntN(len(objects))
 		key = *objects[index].Key
 	case "stations":
 		key = "scorekeeper/1brc/stations-2024-02-10 222443.csv.gz"
 	default:
-		return nil, errors.New(fmt.Sprintf("unsupported station prefix %s", prefix))
+		return StationData{}, errors.New(fmt.Sprintf("unsupported station prefix %s", prefix))
 	}
 
 	getResult, err := s.S3Client.GetObject(ctx, &s3.GetObjectInput{
@@ -64,8 +69,11 @@ func (s *CloudStorage) GetStationData(ctx context.Context, count int) (io.ReadCl
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		return nil, err
+		return StationData{}, err
 	}
 
-	return getResult.Body, err
+	return StationData{
+		Key:    key,
+		Reader: getResult.Body,
+	}, err
 }

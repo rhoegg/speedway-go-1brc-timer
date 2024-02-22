@@ -8,6 +8,7 @@ import (
 	"github.com/goccy/go-json"
 	"io"
 	"log"
+	"math/rand/v2"
 	"net"
 	"net/http"
 	"os"
@@ -24,6 +25,8 @@ type TemperatureAveragesRequest struct {
 type TemperatureAveragesResponse struct {
 	RacerID  string        `json:"racerId"`
 	Time     float64       `json:"time"`
+	Epsilon  float64       `json:"epsilon"`
+	Source   string        `json:"source"`
 	Averages []Measurement `json:"averages"`
 }
 
@@ -54,13 +57,14 @@ func main() {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		storedStationReader, err := storage.GetStationData(c.Request.Context(), req.Count)
+		stationData, err := storage.GetStationData(c.Request.Context(), req.Count)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		defer storedStationReader.Close()
-		pipeline, err := NewMeasurementsJsonPipeline(storedStationReader)
+		defer stationData.Reader.Close()
+		epsilon := rand.Float64()*2 - 1
+		pipeline, err := NewMeasurementsJsonPipeline(stationData.Reader, epsilon)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -93,6 +97,8 @@ func main() {
 		}
 		// end timer
 		response.Time = time.Since(start).Seconds()
+		response.Epsilon = epsilon
+		response.Source = stationData.Key
 		c.JSON(http.StatusOK, response)
 	})
 
