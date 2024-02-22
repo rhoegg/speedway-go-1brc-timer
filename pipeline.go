@@ -54,7 +54,11 @@ func (p *MeasurementsJsonPipeline) Read(dest []byte) (int, error) {
 			if err != nil {
 				if err == io.EOF {
 					p.Buffer.WriteString("\n]")
-					return p.Buffer.Read(dest)
+					n, err := p.Buffer.Read(dest)
+					if err != nil {
+						return n, err
+					}
+					return n, io.EOF
 				}
 				return 0, err
 			}
