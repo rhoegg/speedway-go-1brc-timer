@@ -3,10 +3,14 @@ package main
 import (
 	"compress/gzip"
 	"fmt"
+	"github.com/coreos/go-systemd/daemon"
 	"github.com/gin-gonic/gin"
 	"github.com/goccy/go-json"
 	"io"
+	"log"
+	"net"
 	"net/http"
+	"os"
 	"runtime"
 	"time"
 )
@@ -25,6 +29,10 @@ type TemperatureAveragesResponse struct {
 
 func main() {
 	runtime.GOMAXPROCS(2)
+	port, found := os.LookupEnv("RACER_PORT")
+	if !found {
+		port = "8080"
+	}
 	bucket := "speedway-internal"
 	path := "scorekeeper/1brc"
 	r := gin.Default()
@@ -88,7 +96,15 @@ func main() {
 		c.JSON(http.StatusOK, response)
 	})
 
-	r.Run()
+	l, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
+	if err != nil {
+		panic(err)
+	}
+	daemon.SdNotify(false, daemon.SdNotifyReady)
+	err = http.Serve(l, r)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func CreateRacerRequest(req TemperatureAveragesRequest, pipeline *MeasurementsJsonPipeline) (*http.Request, <-chan error) {
