@@ -77,6 +77,6 @@ func (s *CloudStorage) GetStationData(ctx context.Context, count int) (StationDa
 
 	return StationData{
 		Key:    key,
-		Reader: getResult.Body,
+		Reader: NewContextReadCloser(ctx, getResult.Body),
 	}, err
 }
