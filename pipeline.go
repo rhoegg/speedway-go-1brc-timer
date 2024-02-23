@@ -22,6 +22,7 @@ func (r RoundedFloat) MarshalJSON() ([]byte, error) {
 }
 
 type MeasurementsJsonPipeline struct {
+	tag          string
 	source       io.Reader
 	decompressed io.ReadCloser
 	csv          *csv.Reader
@@ -30,7 +31,7 @@ type MeasurementsJsonPipeline struct {
 	Buffer       *bytes.Buffer
 }
 
-func NewMeasurementsJsonPipeline(compressedCsvDataReader io.Reader, epsilon float64) (*MeasurementsJsonPipeline, error) {
+func NewMeasurementsJsonPipeline(compressedCsvDataReader io.Reader, epsilon float64, tag string) (*MeasurementsJsonPipeline, error) {
 	decompressed, err := gzip.NewReader(compressedCsvDataReader)
 	if err != nil {
 		return nil, err
@@ -61,7 +62,7 @@ func (p *MeasurementsJsonPipeline) Read(dest []byte) (int, error) {
 					if err != nil {
 						return n, err
 					}
-					log.Printf("Completed downloading cached station data from %s", p.source)
+					log.Printf("Completed downloading cached station data from %s", p.tag)
 					return n, io.EOF
 				}
 				return 0, err
@@ -88,7 +89,7 @@ func (p *MeasurementsJsonPipeline) Read(dest []byte) (int, error) {
 			}
 			p.rowsConsumed++
 			if p.rowsConsumed%10000000 == 0 {
-				log.Printf("[s3] Downloaded %d rows from %s", p.rowsConsumed, p.source)
+				log.Printf("[s3] Downloaded %d rows from %s", p.rowsConsumed, p.tag)
 			}
 		}
 	}

@@ -46,7 +46,6 @@ func main() {
 	}
 
 	r.POST("/timed/temperature-averages", func(c *gin.Context) {
-
 		storage, err := NewCloudStorage(c.Request.Context(), bucket, path)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -66,7 +65,7 @@ func main() {
 		}
 		defer stationData.Reader.Close()
 		epsilon := rand.Float64()*2 - 1
-		pipeline, err := NewMeasurementsJsonPipeline(stationData.Reader, epsilon)
+		pipeline, err := NewMeasurementsJsonPipeline(stationData.Reader, epsilon, stationData.Key)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
