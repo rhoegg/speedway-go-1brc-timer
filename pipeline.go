@@ -38,6 +38,7 @@ func NewMeasurementsJsonPipeline(compressedCsvDataReader io.Reader, epsilon floa
 	}
 	csvReader := csv.NewReader(decompressed)
 	return &MeasurementsJsonPipeline{
+		tag:          tag,
 		source:       compressedCsvDataReader,
 		decompressed: decompressed,
 		csv:          csvReader,

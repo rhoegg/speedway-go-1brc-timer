@@ -58,6 +58,7 @@ func main() {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+		log.Printf("timing 1brc for racer %s", req.RacerID)
 		stationData, err := storage.GetStationData(c.Request.Context(), req.Count)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
