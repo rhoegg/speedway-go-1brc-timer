@@ -32,7 +32,7 @@ type TemperatureAveragesResponse struct {
 
 func main() {
 	runtime.GOMAXPROCS(2)
-	port, found := os.LookupEnv("RACER_PORT")
+	port, found := os.LookupEnv("PORT")
 	if !found {
 		port = "8080"
 	}
