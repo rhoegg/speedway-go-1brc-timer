@@ -6,6 +6,7 @@ import (
 	"encoding/csv"
 	"github.com/goccy/go-json"
 	"io"
+	"log"
 	"strconv"
 )
 
@@ -60,6 +61,7 @@ func (p *MeasurementsJsonPipeline) Read(dest []byte) (int, error) {
 					if err != nil {
 						return n, err
 					}
+					log.Printf("Completed downloading cached station data from %s", p.source)
 					return n, io.EOF
 				}
 				return 0, err
@@ -85,6 +87,9 @@ func (p *MeasurementsJsonPipeline) Read(dest []byte) (int, error) {
 				return 0, err
 			}
 			p.rowsConsumed++
+			if p.rowsConsumed%10000000 == 0 {
+				log.Printf("[s3] Downloaded %d rows from %s", p.rowsConsumed, p.source)
+			}
 		}
 	}
 	copied, err := p.Buffer.Read(dest)

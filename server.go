@@ -2,6 +2,7 @@ package main
 
 import (
 	"compress/gzip"
+	"context"
 	"fmt"
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/gin-gonic/gin"
@@ -45,6 +46,7 @@ func main() {
 	}
 
 	r.POST("/timed/temperature-averages", func(c *gin.Context) {
+
 		storage, err := NewCloudStorage(c.Request.Context(), bucket, path)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -72,7 +74,7 @@ func main() {
 		defer pipeline.Close()
 
 		// conditionally gzip
-		averagesRequest, errch := CreateRacerRequest(req, pipeline)
+		averagesRequest, errch := CreateRacerRequest(c.Request.Context(), req, pipeline)
 		// start timer
 		start := time.Now()
 		// stream to endpoint
@@ -113,7 +115,7 @@ func main() {
 	}
 }
 
-func CreateRacerRequest(req TemperatureAveragesRequest, pipeline *MeasurementsJsonPipeline) (*http.Request, <-chan error) {
+func CreateRacerRequest(ctx context.Context, req TemperatureAveragesRequest, pipeline *MeasurementsJsonPipeline) (*http.Request, <-chan error) {
 	errch := make(chan error, 1)
 
 	racerUrl := fmt.Sprintf("%s/1brc", req.Endpoint)
@@ -123,7 +125,7 @@ func CreateRacerRequest(req TemperatureAveragesRequest, pipeline *MeasurementsJs
 		if err != nil {
 			errch <- err
 		}
-		return httpRequest, errch
+		return httpRequest.WithContext(ctx), errch
 	} else {
 		compressedBodyReader := CompressRequestBody(pipeline, errch)
 		averagesRequest, err := http.NewRequest("POST", racerUrl, compressedBodyReader)
@@ -133,7 +135,7 @@ func CreateRacerRequest(req TemperatureAveragesRequest, pipeline *MeasurementsJs
 			return nil, errch
 		}
 		averagesRequest.Header.Add("Content-Encoding", "gzip")
-		return averagesRequest, errch
+		return averagesRequest.WithContext(ctx), errch
 	}
 }
 

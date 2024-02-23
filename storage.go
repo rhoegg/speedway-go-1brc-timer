@@ -62,7 +62,12 @@ func (s *CloudStorage) GetStationData(ctx context.Context, count int) (StationDa
 		index := rand.IntN(len(objects))
 		key = *objects[index].Key
 	case "stations":
-		key = "scorekeeper/1brc/stations-2024-02-10 222443.csv.gz"
+		approvedBigFiles := []string{
+			"scorekeeper/1brc/stations-2024-02-10 222443.csv.gz",
+			"scorekeeper/1brc/stations-2024-02-11 022443.csv.gz",
+		}
+		index := rand.IntN(len(approvedBigFiles))
+		key = approvedBigFiles[index]
 	default:
 		return StationData{}, errors.New(fmt.Sprintf("unsupported station prefix %s", prefix))
 	}
