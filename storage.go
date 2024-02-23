@@ -52,6 +52,9 @@ func (s *CloudStorage) GetStationData(ctx context.Context, count int) (StationDa
 		Bucket: aws.String(s.Bucket),
 		Prefix: aws.String(fmt.Sprintf("%s/%s", s.Path, prefix)),
 	})
+	if err != nil {
+		return StationData{}, err
+	}
 	objects := listResult.Contents
 	key := ""
 	switch prefix {
