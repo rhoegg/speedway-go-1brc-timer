@@ -80,14 +80,17 @@ func main() {
 		// stream to endpoint
 		racerResponse, err := racerClient.Do(averagesRequest)
 		if err != nil {
+			log.Printf("racer failure: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		if err = <-errch; err != nil {
+			log.Printf("http request failure: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		if racerResponse.StatusCode != 200 {
+			log.Printf("racer failure: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("racer status %d", racerResponse.StatusCode)})
 		}
 		// receive full response
@@ -95,6 +98,7 @@ func main() {
 		decoder = json.NewDecoder(racerResponse.Body)
 		err = decoder.Decode(&response)
 		if err != nil {
+			log.Printf("racer failure: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
 		// end timer
