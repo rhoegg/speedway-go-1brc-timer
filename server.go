@@ -92,6 +92,7 @@ func main() {
 		if racerResponse.StatusCode != 200 {
 			log.Printf("racer failure: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("racer status %d", racerResponse.StatusCode)})
+			return
 		}
 		// receive full response
 		var response TemperatureAveragesResponse
@@ -100,6 +101,7 @@ func main() {
 		if err != nil {
 			log.Printf("racer failure: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
 		// end timer
 		response.Time = time.Since(start).Seconds()
@@ -128,6 +130,8 @@ func CreateRacerRequest(ctx context.Context, req TemperatureAveragesRequest, pip
 		httpRequest, err := http.NewRequest("POST", racerUrl, pipeline)
 		if err != nil {
 			errch <- err
+			close(errch)
+			return nil, errch
 		}
 		httpRequest.Header.Set("Content-Type", "application/json")
 		return httpRequest.WithContext(ctx), errch
