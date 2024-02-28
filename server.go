@@ -129,6 +129,7 @@ func CreateRacerRequest(ctx context.Context, req TemperatureAveragesRequest, pip
 		if err != nil {
 			errch <- err
 		}
+		httpRequest.Header.Set("Content-Type", "application/json")
 		return httpRequest.WithContext(ctx), errch
 	} else {
 		compressedBodyReader := CompressRequestBody(pipeline, errch)
@@ -138,7 +139,8 @@ func CreateRacerRequest(ctx context.Context, req TemperatureAveragesRequest, pip
 			close(errch)
 			return nil, errch
 		}
-		averagesRequest.Header.Add("Content-Encoding", "gzip")
+		averagesRequest.Header.Set("Content-Type", "application/json")
+		averagesRequest.Header.Set("Content-Encoding", "gzip")
 		return averagesRequest.WithContext(ctx), errch
 	}
 }
