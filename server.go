@@ -124,7 +124,7 @@ func main() {
 func CreateRacerRequest(ctx context.Context, req TemperatureAveragesRequest, pipeline *MeasurementsJsonPipeline) (*http.Request, <-chan error) {
 	errch := make(chan error, 1)
 
-	racerUrl := fmt.Sprintf("%s/1brc", req.Endpoint)
+	racerUrl := fmt.Sprintf("%s/temperatures", req.Endpoint)
 	if req.Count < 10000000 {
 		defer close(errch)
 		httpRequest, err := http.NewRequest("POST", racerUrl, pipeline)
