@@ -90,7 +90,7 @@ func main() {
 			return
 		}
 		if racerResponse.StatusCode != 200 {
-			log.Printf("racer failure: %v", err)
+			log.Printf("unexpected racer status code %d", racerResponse.StatusCode)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("racer status %d", racerResponse.StatusCode)})
 			return
 		}
